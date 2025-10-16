@@ -7,12 +7,13 @@ In previous editions of the Data Structures Dispatch, we covered a way to use dy
 After exploring different algorithms for implementing such a data structure, we noticed something fishy: When the user wants to insert an element in to the array, there are two possibilities:
 
 1.  There is additional _capacity_ in the array ($size < capacity$);
-2.  There is no additional _capacity_ in the array ($size == capacity$).
+2.  There is no additional _capacity_ in the array ($size == capacity$).[^common]
 
+[^common]: In fact, we spent _most_ of our time discussing (2) and treated (1) as a potential optimization.
 
-In case (1), we can add the element to the array using a trivial algorithm. In case (2), however, the algorithm for adding an element is more complicated. It involved, among other steps, adding more space to the array. Amid all the other work that the algorithm took to properly insert an element in the list when there was no spare capacity, the key step was to _allocate additional capacity for the array_. From experience I am sure I don't need to tell you, but allocating memory is very, very expensive.
+In case (1), we can add the element to the array using a trivial algorithm. In case (2), however, the algorithm for adding an element is more complicated. It involved, among other steps, adding more space to the array. Amid all the other work that the algorithm did to properly insert an element in the list when there was no spare capacity, the key step was to _allocate additional capacity for the array_. Asking the operating system to dynamically allocate memory for us is _no_ cheap task.
 
-When the user wants to remove an element from the array, the algorithm we executed was (although slightly complicated) very efficient. Removing an element from the array took a constant number of operations. Very cool! Our gain in efficiency came at a cost, however – the algorithm _never_ released spare capacity back to the operating system.
+We designed an algorithm for deleting elements from the list that was _very_ efficient. The problem was, it only _logically_ deleted the elements from the array. As a result of performing a quasi-removal, the number of operations that it took to clear an element from the list was constant. In other words, no matter how big the array became, the number of steps it took to remove an element di d not change. Very cool! Our gain in efficiency came at a cost, however: the algorithm _never_ released spare capacity back to the operating system.
 
 The figure below illustrates the state of the member variables of an instance of the dynamic array data structure used to implement the dynamically-sized-collection ADT after the elements `3`, `1`, `7`, `4`, `2` `9`, `8`, `6` were added (in that order) and removed (in the reverse order). Note how the item in the `0`th index of the array is `1` and _not_ `3`. Why is that?
 
@@ -26,13 +27,15 @@ For that we will turn to the …
 
 As the name implies, a linked list is a data structure that can manage a dynamic number of elements by creating a list of those elements and _linking_ them together. The link between elements is done with pointers. A linked list is built with two cooperating data structures – the linked list itself (mostly just a place to store bookkeeping information) and a node.
 
-The linked-list data structure contains two member variables. The first member variable is a simple integer that the implementer of the linked list will use to keep track of the length of the list. The second member variable is a pointer which we will call _head_. What is the target of the _head_ pointer? We'll return to that in a second.
+The linked-list data structure contains two member variables. The first member variable is a simple integer that the implementer of the linked list will use to keep track of the length of the list.[^necessary] The second member variable is a pointer which we will call _head_. We use pointers as programmers because they are good for pointing at things ... So, what does the _head_ pointer to point at? Or (if you are interested in being less repetitive), what is the target of the _head_ pointer? We'll return to that in a second.
 
-The node data structure itself also contains two member variables. One of those member variables stores the data that the node holds (its so-called $item$) and the second member variable holds a pointer to the next node in the list (its so-called $next$). It is from this link between two nodes using the _next_ member variable that the linked list gets its name.
+[^necessary]: A member variable to store the number of elements in the linked list is not strictly necessary. It is possible to use the algorithms that we designed for traversing (see below) a linked list to calculate the size any time the user asks.
 
-To reiterate, the _type_ of the $next$ member variable of a node data structure is a pointer. To be even more explicit and precise, $next$ is a pointer to an object of exactly the same class as itself. The relationship between these types gives rise to the description of a node in a linked list as a _recursive data structure_ because it refers to itself.
+The node data structure that itself constitutes the elements of the linked list contains two member variables. One of those member variables stores the data that the node holds (its so-called _value_) and the second member variable holds a pointer to the next node in the list (its so-called _next_). The next pointer is the mechanism through which the list is linked!
 
-We can now resolve the question we left unanswered earlier – what is the target of the $head$ pointer member variable of the linked list data structure? The $head$ pointer is a way for the implementer of the data structure to refer to the first node, or head, of the linked list. The linked-list implementer needs only a pointer to that node in the list (and nothing else!) to be able to implement all the operations necessary for a linked list to support all the operations of the dynamically-sized-collection ADT.
+To reiterate, the _type_ of the _next_ member variable of a node data structure is a pointer to another node. To be even more explicit and precise, _next_ is a pointer to an object of exactly the same class as itself. The relationship between these types gives rise to the description of a node in a linked list as a _recursive data structure_ because it refers to itself.
+
+We can now resolve the question we left unanswered earlier – what is the target of the _head_ pointer member variable of the linked list data structure? The _head_ pointer is a way for the implementer of the data structure to refer to the first node, or head, of the linked list. The linked-list implementer needs only a pointer to that node in the list (and nothing else!) to be able to implement all the operations necessary for a linked list to support all the operations of the dynamically-sized-collection ADT.
 
 ## Linked List Visualized
 
@@ -40,9 +43,13 @@ A conceptual visualization of a linked list might make things easier to understa
 
 ![Visualization of a conception of a linked list.](./graphics/ConceptualLinkedList.png)
 
-In this example, you can see how the linked list's $length$ member variable holds the length of the list. You can also see how the linked list's $head$ member variable targets the first node in the list which, in turn, points to the second, and so on.
+In this example, you can see 
 
-The red slash in the $next$ member variable of the final node in the linked list indicates that the $next$ member variable of that node targets nothing. When we start to write code, the slash will translate to a `nullptr`. The presence of a `nullptr` as the target of the $next$ pointer will be very helpful when we design algorithms for "walking" through a linked list – it will tell us when we should stop walking.
+1. how the linked list's _length_ member variable holds the length of the list; 
+2. how the linked list's _head_ member variable targets the first node in the list; and, finally,
+3 how the _next_ member variable of each of the nodes in the linked list points to the node that comes after them.
+
+The red slash in the _next_ member variable of the final node in the linked list indicates that the _next_ member variable of that node targets nothing. When we start to write code, the slash will translate to a `nullptr`. The presence of a `nullptr` as the target of the _next_ pointer will be very helpful when we design algorithms for "walking" through a linked list – it will tell us when we should stop walking.
 
 ### Linked List Operations Explained and Visualized
 
@@ -56,15 +63,17 @@ What good is it to add something if we can't remove it? See the figure below for
 
 ![Removing an existing node from a linked list (1/5).](./graphics/ConceptualLinkedList-Remove-1.jpg)
 
-The type of $to\_remove$ is the same as the type of $head$ and $next$ (yes, _each_ $next$) because it accomplishes the exact same goal as those pointers: To, well, point to a node. 
+The type of _to\_remove_ is the same as the type of _head_ and _next_ (yes, _each_ _next_) because it accomplishes the exact same goal as those pointers: To, well, point to a node. 
 
 ![Removing an existing node from a linked list (2/5).](./graphics/ConceptualLinkedList-Remove-2.jpg)
 
-And, again, $prior$ is the same type as $to\_remove$, $head$ and $next$. Now we are getting somewhere!
+And, again, _prior_ is the same type as _to\_remove_, _head_ and _next_. Now we are getting somewhere!
 
 We need a pointer to the node prior to the one that we are removing (i.e., $prior$) in the removal algorithm but we did _not_ need it in the insertion algorithm. Curious. 
 
-We need a pointer to the node prior to the one that we are removing because it contains a pointer to the to-be-deleted node. If we delete that node (as will be done in the next step) and we do not edit the $next$ pointer in the prior node, then we are going to have a very dangerous situation!
+We need a pointer to the node prior to the one that we are removing because it contains a pointer to the to-be-deleted node. In order to remove the to-be-deleted node, we will have to make sure that any node with a link that might lead a user of the linked list to that node gets redirected.[^different] 
+
+[^different]: There are myriad ways to write the code that removes a node from a linked list. In fact, we wrote a different algorithm together in class.
 
 ![Removing an existing node from a linked list (3/5).](./graphics/ConceptualLinkedList-Remove-3.jpg)
 
@@ -72,7 +81,7 @@ Now that all of the pointers are set up we can do the actual deletion of the nod
 
 ![Removing an existing node from a linked list (4/5).](./graphics/ConceptualLinkedList-Remove-4.jpg)
 
-Finally, we adjust the $next$ pointer from $prior$ so that it points to the node after the one that we deleted. Whew. That's a mouthful. Good thing these drawings are here to help.
+Finally, we adjust the _next_ pointer from _prior_ so that it points to the node _next_ after the one that we deleted. Whew. That's a mouthful. Good thing these drawings are here to help.
 
 ![Removing an existing node from a linked list (5/5).](./graphics/ConceptualLinkedList-Remove-5.jpg)
 
@@ -80,7 +89,7 @@ Finally, we adjust the $next$ pointer from $prior$ so that it points to the node
 
 With a conceptual understanding of the linked list data structure in our quiver, it is now possible to compare/contrast the linked list implementation of the ADT that has the operations _insert_ and _delete_ with the dynamic array implementation of an ADT with the same operations. 
 
-The most important difference to notice is that the linked-list implementation does not have any wasted spaces for elements that we were created to hold members of the list but then subsequently deleted. That's awesome.
+The most important difference to notice is that the linked-list implementation does not have any wasted spaces for elements that we created to hold members of the list but then subsequently deleted. That's awesome.
 
 Another difference is that we are allocating a single node at a time when we are inserting data into the list. How is this different that the situation where we implemented the ADT with a dynamic array? Well, in the latter case we were forced to _realloc_ the entire array in order to add a single new element (because all the space had to be contiguous in memory).
 
@@ -124,12 +133,13 @@ Something doesn't seem quite right about our `Node`, though.
 
 The node data structure's `m_item` member variable will have a different type depending on the kinds of elements being stored in the linked list, right? A linked list of `int`s means that the node data structure's `m_item` will have an `int` type. On the other hand, a linked list of `char`s means that `Node`'s `m_item` will have a `char` data type. What would be great is if C++ gave us the power to parameterize the definition of `Node` so that we could vary a type on demand ...
 
-Oh wait, it does!! Templates!
+Oh wait, it does!! [Templates](https://github.com/hawkinsw/CPPTimes/blob/main/templates.md)!
 
-The template parameter becomes the means of parameterizing `Node` so that it can be used to store any type of item! A much better declaration/definition of the `Node` class (and the one that we will use going forward) looks like the following:
+The template parameter becomes the means of parameterizing `Node` so that a user can instantiate it with different template arguments so that it can be used to store any type of item! A much better declaration/definition of the `Node` class (and the one that we will use going forward) looks like the following:
 
 ```C++
-template <class ItemType> class Node {
+template <class ItemType>
+class Node {
 public:
   Node() : m_item(), m_next(nullptr) {}
 ...
@@ -141,13 +151,15 @@ private:
 
 The `Node` class is a utility data structure -- it's use is to store data and point to a copy of something that looks exactly like it does, just with different data. 
 
-On the other hand, the linked-list data structure is a bookkeeping tool. It is used to keep track of metadata about the linked list and provide the interface to the linked-list user to modify it, search it, etc. 
+On the other hand, the linked-list data structure is a bookkeeping tool. It is used to keep track of metadata about the linked list and provide the interface to the linked-list user to modify the linked list, search the linked list, etc. 
 
-As we saw during our conceptual discussion about the linked list (above), an implementation of the linked-list data structure needs some kind of means of referencing its nodes. Because of the way that nodes are linked to one another by their `m_next` member variables, a linked list implementation can eke by with storing only a pointer to the first node in the linked list (and still have the power to access *every* node -- cool!). What is the type of this member variable? Bingo, pointer to `Node`.
+As we saw during our conceptual discussion about the linked list (above), an implementation of the linked-list data structure needs some kind of means of referencing its nodes. Because of the way that nodes are linked to one another by their `m_next` member variables, a linked list implementation can eke by with storing only a pointer to the first node in the linked list.[^cool] What is the type of this member variable? Bingo, pointer to `Node`.
 
-Besides a pointer to the head of the linked list of nodes, the linked-list implementation may contain other pieces of metadata that cache the value of commonly accessed properties to make user operations faster. These bits of data are not strictly necessary, but are quite helpful. One of the most frequently accessed properties of a linked list is its size (which could also be called its length). Although a linked list implementation can always _dynamically_ calculate its size, keeping a single member variable to hold the size will save lots of calculation.
+[^cool]: What's so neat about linked lists is that even with our data structure holding a pointer to a _single_ node in the list, it and still has the power to access _every_ node!
 
-Given that discussion, here's a definition/declaration of a `LinkedList` class (without any methods just yet) that implements a linked-list of numbers:
+Besides a pointer to the head of the linked list of nodes, the linked-list implementation may contain other pieces of metadata that cache the value of commonly accessed properties to make user operations faster. These bits of data are not strictly necessary, but are quite helpful. One of the most frequently accessed properties of a linked list is its length (which could also be called its size). Although a linked list implementation can always _dynamically_ calculate its size, keeping a single member variable to hold the size will save lots of calculation.
+
+Here's a definition/declaration of a `LinkedList` class (without any methods just yet) that implements a linked-list of numbers:
 
 ```C++
 class LinkedList {
@@ -195,7 +207,7 @@ Here's how the `list` and it's items will exist in computer memory after the use
 
 ### The Usual Suspects -- Common Linked List Operations
 
-Remember: The `Node` class is a utility class and the _user_ of the `LinkedList` class is not usually going to interact with that class directly. In fact, the more than we hide it from the end user, the more flexibility we earn if we want to eventually make changes to its definition.
+Remember: The `Node` class is a utility class and the _user_ of the `LinkedList` class is not usually going to interact with that class directly. In fact, the more our implementation hides the nodes from the end user, the more flexibility we earn if we want to eventually make changes to its definition.
 
 As the implementer of `LinkedList`, though, you will work extensively with instances of the `Node` class so it makes some sense to define member functions on `Node` to make those interactions easier.
 
@@ -244,7 +256,7 @@ Wow. So cool!
 
 ![A visualization of the `iterator` temporary automatic variable at the beginning of the algorithm to implement a walk of the nodes of a linked list.](./graphics/LinkedList-Walk1.png)
 
-The illustration below shows the effect of (3.1) on the first iteration of the loop. The purple arrow represents the action of invoking `getPointerToNext()` on `iterator`.
+The illustration below shows the effect of Step (3.1) (in the traversal algorithm above) on the first iteration of the loop. The purple arrow represents the action of invoking `getPointerToNext()` on `iterator`.
 
 ![A visualization of the `iterator` temporary automatic variable at the beginning of the algorithm to implement a walk of the nodes of a linked list when its `getPointerToNext()` member function is invoked.](./graphics/LinkedList-Walk3.png)
 
@@ -259,146 +271,3 @@ The illustration below shows the value of the `iterator` on the last iteration o
 ### The Tip Of the Linked-List Iceberg
 
 There are many other operations that we would like to be able to perform on linked lists. For instance, we would like to be able to add a node to the list. We would like to be able to remove a node from the list. We will discuss implementing these operations in future Dispatches.
-
-## C++ Sidebar: `.` vs `->`
-
-By now we are very, _very_ familiar with the `.` class member access operator and we are increasingly becoming comfortable with the `->` class member access operator. Although they are both the same thing, it is important to thoroughly understand when to use each one.
-
-Let's first think back to the ubiquitous `.` and make a list of the places that we use it:
-
-1. For accessing the members of an object instantiated from a `struct`.
-2. For accessing the public member variables of a `class` (truth be told, declaring member variables of a `class` to be public is not always the best software-engineering decision!).
-3. Calling member functions on objects instantiated from `class`es.
-
-What we left unsaid is that the `.` is used to perform these operations _only_ when the objects are automatic -- i.e., allocated on the stack.
-
-Consider a program like
-
-```C++
-#include <iostream>
-
-class A {
-  public:
-    int a;
-    void printA() const {
-      std::cout << "a: " << a << "\n";
-    }
-};
-
-struct S {
-  int a;
-};
-
-int main() {
-  A a{};
-  S s{1};
-
-  std::cout << "a.a: " << a.a << "\n";
-  a.printA();
-  std::cout << "s.a: " << s.a << "\n";
-
-  return 0;
-}
-```
-[See it live](https://godbolt.org/z/cYTGjT6K9)
-
-`a` and `s` are both automatic variables. Therefore, it is correct to use the `.` in order to access their member variables and call their member functions.
-
-Let's take a brief digression into the world of board games. There is a game called [Chutes and Ladders](https://en.wikipedia.org/wiki/Snakes_and_ladders). In the game, if your piece lands on a space where there is a ladder, your piece climbs the ladder and makes a quick advance up the board. If your piece lands on a space where there is a chute, your piece will slide down the chute and you lose hard-won progress. When I was a kid playing the game and I landed on a space with either a chute or a ladder, I always liked to think that it look a little extra shove for my piece to go up the ladder or down the chute once it landed on the square.
-
-How does that relate to C++?
-
-Consider an automatic variable named `ptr_to_int` declared and initialized like
-
-```C++
-  int *ptr_to_int = new int{0};
-```
-As a result of that declaration and initialization, part of the memory space of our program might look like this:
-
-![A visualization of the memory space of a program that declares and defines an automatic member variable that points to an `int` in the heap.](graphics/PointerToInt.png)
-
-Think about `ptr_to_int` as a spot on the Chutes and Ladders gameboard connected to either a chute or a ladder. A `*` before the `ptr_to_int` is like pushing our game token up the ladder or down the chute and the ultimate destination is the target of the pointer. Using a `*` is called _dereferencing_ a pointer. Dereferencing a pointer is a very important operation in C++ to understand.
-
-To change the value in the green box pointed to by the purple arrow, we use the `*` as in
-
-```C++
-  *ptr_to_int = 5;
-```
-
-![A visualization of the memory space of a program that declares and defines an automatic member variable that points to an `int` in the heap after the target value of that pointer has been updated to a new value (5).](./graphics/PointerToInt-TargetValueChanged.png)
-
-On the other hand, to change the target of the pointer itself (i.e., where the ladder or chute leads), we omit the `*` as in
-
-```C++
-  ptr_to_int = new int{2};
-```
-
-![A visualization of the memory space of a program that declares and defines an automatic member variable that points to an `int` in the heap after the target of that pointer has been updated to a newly allocated `int`.](graphics/PointerToInt-TargetValueChanged.png)
-
-Why the discussion of the `*` when we were supposed to be talking about the `->`? Because they are fundamentally equivalent.
-
-In short, when we are dealing with dynamic (as opposed to automatic) variables that are instances of `struct`s and `class`es, use the `->` instead of the `.` we used when those were automatic variables. For instance,
-
-```C++
-#include <iostream>
-
-class A {
-  public:
-    int a;
-    void printA() const {
-      std::cout << "a: " << a << "\n";
-    }
-};
-
-struct S {
-  int a;
-};
-
-int main() {
-  A *a = new A{};
-  S *s = new S{1};
-
-  std::cout << "a->a: " << a->a << "\n";
-  a->printA();
-  std::cout << "s->a: " << s->a << "\n";
-
-  return 0;
-}
-```
-[See it live](https://godbolt.org/z/e7h3r75M4)
-
-For those who want to go a little deeper, the `->` is equivalent to first dereferencing the pointer to the instance of `struct` or `class` allocated on the heap and then using the `.`.
-
-In other words, we could rewrite the program above like
-
-```C++
-#include <iostream>
-
-class A {
-  public:
-    int a;
-    void printA() const {
-      std::cout << "a: " << a << "\n";
-    }
-};
-
-struct S {
-  int a;
-};
-
-int main() {
-  A *a = new A{};
-  S *s = new S{1};
-
-  std::cout << "(*a).a: " << (*a).a << "\n";
-  (*a).printA();
-  std::cout << "(*s).a: " << (*s).a << "\n";
-
-  return 0;
-}
-```
-[See it live](https://godbolt.org/z/vx9PWs9h1)
-
-and get exactly the same result.
-
-Please note: the `(*`...`).`... syntax is rarely used in production code and shown here only to highlight the fundamental similarity between the `->`, the `.` and the `*`.
